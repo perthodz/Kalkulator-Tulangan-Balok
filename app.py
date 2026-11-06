@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 # Konfigurasi Halaman
 st.set_page_config(page_title="Retro Beam Calc", page_icon="👾", layout="centered")
 
+# Custom CSS: Perbaikan Font Ikon, Tumpang Tindih & Kontras Warna
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
@@ -149,11 +150,10 @@ def create_retro_chart(kapasitas, beban, judul):
     )
     return fig
 
-st.title("👾 STRUKTUR BALOK CALC 8-BIT")
+st.title("👾 BALOK CALC 8-BIT")
 st.caption("TEKAN START UNTUK MENGECEK KEAMANAN STRUKTUR...")
 
 # --- PANDUAN ---
-# Menggunakan tanda [+] sebagai pengganti ikon panah agar terkesan jadul
 with st.expander("[+] BUKU PETUNJUK TUTORIAL", expanded=False):
     st.markdown("""
     **LEVEL 1: PERSIAPAN DATA**
@@ -295,3 +295,14 @@ if st.button("🚀 HITUNG & CEK KEAMANAN", use_container_width=True):
             st.error(f"❌ GAME OVER! Kapasitas kurang.")
             
         st.plotly_chart(create_retro_chart(phi_Vn, Vu, "GRAFIK KAPASITAS GESER"), use_container_width=True)
+
+# --- FOOTER / CREDITS ---
+st.markdown("<br><br><br>", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div style="text-align: center; font-family: 'Press Start 2P', cursive; font-size: 10px; color: #555555; padding-bottom: 20px;">
+        >>> DEVELOPED BY FAHMI FERDIANSYAH <<<
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
