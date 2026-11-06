@@ -1,97 +1,240 @@
 import streamlit as st
 import math
+import plotly.graph_objects as go
 
-# Konfigurasi Halaman Website
-st.set_page_config(page_title="Kalkulator Analisis Balok", page_icon="🏗️", layout="wide")
+# Konfigurasi Halaman
+st.set_page_config(page_title="Retro Beam Calc", page_icon="👾", layout="centered")
 
-# Custom CSS untuk mempercantik Metric (Kotak Hasil) dan Tombol
 st.markdown("""
 <style>
-    div[data-testid="metric-container"] {
-        background-color: rgba(128, 128, 128, 0.1);
-        border: 1px solid rgba(128, 128, 128, 0.2);
-        padding: 15px;
-        border-radius: 10px;
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+    /* Terapkan font retro HANYA ke elemen teks spesifik agar tidak merusak ikon bawaan */
+    html, body, p, label, div[data-testid="stMarkdownContainer"] {
+        font-family: 'VT323', monospace !important;
+        font-size: 1.3rem !important;
+        color: #000000 !important;
     }
+
+    h1, h2, h3 {
+        font-family: 'Press Start 2P', cursive !important;
+        text-transform: uppercase !important;
+        color: #000000 !important;
+        text-shadow: 2px 2px 0px #a3a3a3 !important;
+    }
+
+    .stApp {
+        background-color: #d1d5db; 
+        background-image: radial-gradient(#9ca3af 1px, transparent 1px);
+        background-size: 20px 20px;
+    }
+
+    /* KUSTOMISASI EXPANDER & PERBAIKAN KONTRAS */
+    div[data-testid="stExpander"] details {
+        background-color: #ffffff !important;
+        border: 4px solid #000000 !important;
+        border-radius: 0px !important;
+        box-shadow: 5px 5px 0px #000000 !important;
+        margin-bottom: 10px;
+    }
+    
+    /* Header Expander (Hitam Pekat) */
+    div[data-testid="stExpander"] details summary {
+        background-color: #111111 !important; 
+        padding: 10px !important;
+        border-bottom: 2px solid #000000 !important;
+    }
+
+    /* Teks Judul Expander (Putih Terang / Retro) */
+    div[data-testid="stExpander"] details summary p, 
+    div[data-testid="stExpander"] details summary span {
+        color: #ffffff !important; 
+        font-family: 'Press Start 2P', cursive !important;
+        font-size: 12px !important;
+    }
+
+    /* Sembunyikan ikon teks 'arrow_right' bawaan yang bentrok */
+    div[data-testid="stExpander"] details summary svg,
+    div[data-testid="stExpander"] details summary [data-testid="stIconMaterial"] {
+        display: none !important;
+    }
+
+    /* Isi dari expander (Background Putih) */
+    div[data-testid="stExpanderDetails"] {
+        padding: 15px !important;
+        background-color: #ffffff !important;
+    }
+
+    /* TOMBOL ARCADE */
     .stButton>button {
-        border-radius: 8px;
-        height: 55px;
-        font-size: 20px;
-        font-weight: bold;
+        background-color: #ff003c !important;
+        color: #ffffff !important;
+        border: 4px solid #000000 !important;
+        border-radius: 0px !important;
+        box-shadow: 6px 6px 0px #000000 !important;
+        height: 60px !important;
+        font-family: 'Press Start 2P', cursive !important;
+        font-size: 14px !important;
+        text-transform: uppercase;
+        transition: all 0.1s ease;
+    }
+    
+    .stButton>button * {
+        color: #ffffff !important;
+    }
+    
+    .stButton>button:active {
+        transform: translate(6px, 6px) !important;
+        box-shadow: 0px 0px 0px #000000 !important;
+    }
+
+    div[data-testid="metric-container"] {
+        background-color: #ffffff !important;
+        border: 4px solid #000000 !important;
+        border-radius: 0px !important;
+        box-shadow: 5px 5px 0px #000000 !important;
+        padding: 10px;
+    }
+
+    input, .stSelectbox div[data-baseweb="select"] {
+        border: 2px solid #000000 !important;
+        border-radius: 0px !important;
+        font-family: 'VT323', monospace !important;
+        font-size: 1.2rem !important;
+        background-color: #f3f4f6 !important;
+        color: #000000 !important;
+    }
+    
+    .stAlert {
+        border: 3px solid #000000 !important;
+        border-radius: 0px !important;
+        box-shadow: 4px 4px 0px #000000 !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🏗️ Kalkulator Analisis Balok")
-st.caption("Aplikasi interaktif untuk mengecek keamanan desain tulangan lentur dan geser pada penampang balok beton bertulang berdasarkan Standar Nasional Indonesia (SNI).")
-st.divider()
+# Fungsi untuk membuat grafik interaktif Retro Bar Chart
+def create_retro_chart(kapasitas, beban, judul):
+    fig = go.Figure()
+    
+    # Bar Kapasitas (Biru Retro)
+    fig.add_trace(go.Bar(
+        x=['Kapasitas (Terpasang)'], y=[kapasitas],
+        marker_color='#3b82f6',
+        marker_line_color='black', marker_line_width=3,
+        name='Kapasitas'
+    ))
+    
+    # Bar Beban (Merah Retro)
+    fig.add_trace(go.Bar(
+        x=['Beban (Rencana)'], y=[beban],
+        marker_color='#ef4444',
+        marker_line_color='black', marker_line_width=3,
+        name='Beban'
+    ))
+    
+    # Styling batas aman
+    fig.add_hline(y=beban, line_dash="dash", line_color="black", line_width=2, 
+                  annotation_text="BATAS AMAN", annotation_position="top right")
 
-# --- BAGIAN INPUT DATA ---
-st.header("📝 Data Perencanaan")
+    fig.update_layout(
+        title={'text': judul, 'font': {'family': 'VT323', 'size': 24}},
+        plot_bgcolor='white', paper_bgcolor='rgba(0,0,0,0)',
+        font={'family': 'VT323', 'size': 18, 'color': 'black'},
+        margin=dict(l=20, r=20, t=50, b=20),
+        height=300,
+        showlegend=False,
+        yaxis=dict(gridcolor='#e5e7eb', zerolinecolor='black', zerolinewidth=2),
+        xaxis=dict(zerolinecolor='black', zerolinewidth=2)
+    )
+    return fig
 
-with st.container():
-    col_in1, col_in2, col_in3 = st.columns(3)
+st.title("👾 STRUKTUR BALOK CALC 8-BIT")
+st.caption("TEKAN START UNTUK MENGECEK KEAMANAN STRUKTUR...")
 
-    with col_in1:
-        st.subheader("🧱 Bahan Struktur")
-        fc = st.number_input("Kuat tekan beton (fc') [MPa]", value=30.0, step=1.0)
-        fy = st.number_input("Teg. leleh baja lentur (fy) [MPa]", value=420.0, step=10.0)
-        fys = st.number_input("Teg. leleh baja geser (fys) [MPa]", value=280.0, step=10.0)
-
-    with col_in2:
-        st.subheader("📏 Dimensi Balok")
-        b = st.number_input("Lebar balok (b) [mm]", value=400.0, step=10.0)
-        h = st.number_input("Tinggi balok (h) [mm]", value=600.0, step=10.0)
-        D_lentur = st.number_input("Diameter tul. deform (D) [mm]", value=22.0, step=1.0)
-        D_geser = st.number_input("Diameter sengkang polos (Ø) [mm]", value=10.0, step=1.0, min_value=0.0)
-        ts = st.number_input("Tebal selimut beton (ts) [mm]", value=40.0, step=1.0)
-
-    with col_in3:
-        st.subheader("⚖️ Gaya Rencana (Output Etabs/SAP)")
-        Mu_pos = st.number_input("Momen positif (Mu+) [kNm]", value=133.08)
-        Mu_neg = st.number_input("Momen negatif (Mu-) [kNm]", value=251.96)
-        Vu = st.number_input("Gaya geser (Vu) [kN]", value=212.94)
-
-st.divider()
-
-# --- AREA RENCANA TULANGAN ---
-st.header("🛠️ Rencana Tulangan Terpasang")
-with st.container():
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.markdown("### 🔴 Tumpuan (Mu-)")
-        n_tump = st.number_input("Jumlah tulangan (n tumpuan)", value=4, min_value=1)
-        d_tump = st.number_input("Diameter (D tumpuan) [mm]", value=22, min_value=8)
-
-    with col2:
-        st.markdown("### 🔵 Lapangan (Mu+)")
-        n_lap = st.number_input("Jumlah tulangan (n lapangan)", value=4, min_value=1)
-        d_lap = st.number_input("Diameter (D lapangan) [mm]", value=22, min_value=8)
-
-    with col3:
-        st.markdown("### 🟢 Geser (Vu)")
-        d_seng = st.number_input("Diameter sengkang (Ø geser) [mm]", value=10, min_value=0)
-        s_seng = st.number_input("Jarak sengkang (s) [mm]", value=150.0, min_value=0.0)
-        kaki = st.selectbox("Jumlah kaki sengkang", options=[0, 2, 3, 4, 6], index=1)
+# --- PANDUAN ---
+# Menggunakan tanda [+] sebagai pengganti ikon panah agar terkesan jadul
+with st.expander("[+] BUKU PETUNJUK TUTORIAL", expanded=False):
+    st.markdown("""
+    **LEVEL 1: PERSIAPAN DATA**
+    * Masukkan mutu beton ($f_c'$), baja lentur ($f_y$), dan baja geser ($f_{ys}$).
+    * Tentukan dimensi penampang ($b$ dan $h$).
+    
+    **LEVEL 2: AMBIL LOOT DARI ETABS/SAP2000**
+    * Momen 3-3: Masukkan Momen Positif ($M_{u+}$) dan Negatif ($M_{u-}$).
+    * Shear 2-2: Ambil gaya geser terbesar ($V_u$).
+      
+    **LEVEL 3: UJI TULANGAN**
+    * Input jumlah dan diameter. Tekan **HITUNG**.
+    """)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- TOMBOL HITUNG LINTAS KOLOM ---
-if st.button("🚀 HITUNG & CEK KEAMANAN STRUKTUR", type="primary", use_container_width=True):
+# --- INPUT DATA ---
+with st.expander("[+] INVENTORY: BAHAN STRUKTUR", expanded=True):
+    fc = st.number_input("Kuat tekan beton (fc') [MPa]", value=30.0, step=1.0)
+    col_b1, col_b2 = st.columns(2)
+    with col_b1:
+        fy = st.number_input("Baja lentur (fy) [MPa]", value=420.0, step=10.0)
+    with col_b2:
+        fys = st.number_input("Baja geser (fys) [MPa]", value=280.0, step=10.0)
+
+with st.expander("[+] STATUS: DIMENSI BALOK", expanded=True):
+    col_d1, col_d2 = st.columns(2)
+    with col_d1:
+        b = st.number_input("Lebar (b) [mm]", value=400.0, step=10.0)
+        D_lentur = st.number_input("Diameter lentur (D) [mm]", value=22.0, step=1.0)
+    with col_d2:
+        h = st.number_input("Tinggi (h) [mm]", value=600.0, step=10.0)
+        D_geser = st.number_input("Diameter sengkang (Ø) [mm]", value=10.0, step=1.0, min_value=0.0)
+    ts = st.number_input("Selimut beton (ts) [mm]", value=40.0, step=1.0)
+
+with st.expander("[+] QUEST: GAYA RENCANA (ETABS)", expanded=True):
+    col_m1, col_m2 = st.columns(2)
+    with col_m1:
+        Mu_pos = st.number_input("Momen positif (Mu+) [kNm]", value=133.08)
+    with col_m2:
+        Mu_neg = st.number_input("Momen negatif (Mu-) [kNm]", value=251.96)
+    Vu = st.number_input("Gaya geser (Vu) [kN]", value=212.94)
+
+with st.expander("[+] EQUIPMENT: RENCANA TULANGAN", expanded=True):
+    st.markdown("**-- TULANGAN TUMPUAN (Mu-) --**")
+    col_t1, col_t2 = st.columns(2)
+    with col_t1:
+        n_tump = st.number_input("Jumlah (Tumpuan)", value=4, min_value=1)
+    with col_t2:
+        d_tump = st.number_input("Diameter (Tumpuan) [mm]", value=22, min_value=8)
+        
+    st.markdown("**-- TULANGAN LAPANGAN (Mu+) --**")
+    col_l1, col_l2 = st.columns(2)
+    with col_l1:
+        n_lap = st.number_input("Jumlah (Lapangan)", value=4, min_value=1)
+    with col_l2:
+        d_lap = st.number_input("Diameter (Lapangan) [mm]", value=22, min_value=8)
+
+    st.markdown("**-- TULANGAN GESER (Vu) --**")
+    col_g1, col_g2, col_g3 = st.columns(3)
+    with col_g1:
+        d_seng = st.number_input("Diameter Geser [mm]", value=10, min_value=0)
+    with col_g2:
+        s_seng = st.number_input("Jarak Sengkang [mm]", value=150.0, min_value=0.0)
+    with col_g3:
+        kaki = st.selectbox("Jumlah Kaki", options=[0, 2, 3, 4, 6], index=1)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# --- TOMBOL HITUNG ---
+if st.button("🚀 HITUNG & CEK KEAMANAN", use_container_width=True):
     st.markdown("---")
-    st.header("📊 Laporan Hasil Pengecekan")
+    st.subheader("LAPORAN HASIL (STAGE CLEAR)")
     
-    # Parameter Penampang Ekivalen
     phi_lentur = 0.80  
     phi_geser = 0.75   
     
-    # Tinggi efektif d
     ds = ts + D_geser + (D_lentur / 2)
     d = h - ds
     
-    # --- MENGGUNAKAN TABS UNTUK HASIL ---
-    tab1, tab2, tab3 = st.tabs(["🔴 Analisis Tumpuan", "🔵 Analisis Lapangan", "🟢 Analisis Geser"])
+    tab1, tab2, tab3 = st.tabs(["[ TUMPUAN ]", "[ LAPANGAN ]", "[ GESER ]"])
     
     # --- TAB 1: TUMPUAN ---
     with tab1:
@@ -101,18 +244,15 @@ if st.button("🚀 HITUNG & CEK KEAMANAN STRUKTUR", type="primary", use_containe
         phi_Mn_tump = phi_lentur * Mn_tump
         
         colA, colB = st.columns(2)
-        colA.metric(label="Kapasitas Momen (φMn)", value=f"{phi_Mn_tump:.2f} kNm", delta="Kapasitas Tersedia", delta_color="normal")
-        colB.metric(label="Momen Rencana (Mu-)", value=f"{Mu_neg:.2f} kNm", delta="Beban Terfaktor", delta_color="inverse")
-        
-        # Visualisasi Progress Bar
-        ratio_tump = min(Mu_neg / phi_Mn_tump, 1.0) if phi_Mn_tump > 0 else 1.0
-        st.caption(f"**Rasio Penggunaan Kapasitas:** {ratio_tump*100:.1f}%")
-        st.progress(ratio_tump)
+        colA.metric("Kapasitas (φMn)", f"{phi_Mn_tump:.2f} kNm")
+        colB.metric("Beban (Mu-)", f"{Mu_neg:.2f} kNm")
         
         if phi_Mn_tump >= Mu_neg:
-            st.success(f"✅ **STATUS AMAN!** Kapasitas penampang (φMn = {phi_Mn_tump:.2f} kNm) lebih besar dari beban tumpuan (Mu- = {Mu_neg:.2f} kNm).")
+            st.success(f"✅ MISSION PASSED! (φMn ≥ Mu-)")
         else:
-            st.error(f"❌ **TIDAK AMAN!** Kapasitas penampang kurang. Tambah jumlah atau diameter tulangan tumpuan.")
+            st.error(f"❌ GAME OVER! Kapasitas kurang.")
+            
+        st.plotly_chart(create_retro_chart(phi_Mn_tump, Mu_neg, "GRAFIK MOMEN TUMPUAN"), use_container_width=True)
 
     # --- TAB 2: LAPANGAN ---
     with tab2:
@@ -122,33 +262,20 @@ if st.button("🚀 HITUNG & CEK KEAMANAN STRUKTUR", type="primary", use_containe
         phi_Mn_lap = phi_lentur * Mn_lap
         
         colC, colD = st.columns(2)
-        colC.metric(label="Kapasitas Momen (φMn)", value=f"{phi_Mn_lap:.2f} kNm", delta="Kapasitas Tersedia", delta_color="normal")
-        colD.metric(label="Momen Rencana (Mu+)", value=f"{Mu_pos:.2f} kNm", delta="Beban Terfaktor", delta_color="inverse")
-        
-        ratio_lap = min(Mu_pos / phi_Mn_lap, 1.0) if phi_Mn_lap > 0 else 1.0
-        st.caption(f"**Rasio Penggunaan Kapasitas:** {ratio_lap*100:.1f}%")
-        st.progress(ratio_lap)
+        colC.metric("Kapasitas (φMn)", f"{phi_Mn_lap:.2f} kNm")
+        colD.metric("Beban (Mu+)", f"{Mu_pos:.2f} kNm")
         
         if phi_Mn_lap >= Mu_pos:
-            st.success(f"✅ **STATUS AMAN!** Kapasitas penampang (φMn = {phi_Mn_lap:.2f} kNm) lebih besar dari beban lapangan (Mu+ = {Mu_pos:.2f} kNm).")
+            st.success(f"✅ MISSION PASSED! (φMn ≥ Mu+)")
         else:
-            st.error(f"❌ **TIDAK AMAN!** Kapasitas penampang kurang. Tambah jumlah atau diameter tulangan lapangan.")
+            st.error(f"❌ GAME OVER! Kapasitas kurang.")
+            
+        st.plotly_chart(create_retro_chart(phi_Mn_lap, Mu_pos, "GRAFIK MOMEN LAPANGAN"), use_container_width=True)
 
     # --- TAB 3: GESER ---
     with tab3:
         Vc = (math.sqrt(fc) / 6) * b * d * 1e-3 
         phi_Vc = phi_geser * Vc
-        
-        st.write("##### Evaluasi Kebutuhan Sengkang Berdasarkan Kuat Beton (φVc)")
-        if Vu <= 0.5 * phi_Vc:
-            st.info(f"💡 **Status Teoritis:** Vu ({Vu:.2f} kN) ≤ 0.5 φVc ({0.5 * phi_Vc:.2f} kN). **Tidak perlu sengkang penahan beban**, cukup gunakan sengkang minimum/praktis.")
-        elif Vu <= phi_Vc:
-            st.warning(f"⚠️ **Status Teoritis:** Vu ({Vu:.2f} kN) > 0.5 φVc ({0.5 * phi_Vc:.2f} kN). **Perlu tulangan sengkang minimum**.")
-        else:
-            st.error(f"🚨 **Status Teoritis:** Vu ({Vu:.2f} kN) > φVc ({phi_Vc:.2f} kN). **Mutlak perlu tulangan sengkang penahan beban**.")
-            
-        st.divider()
-        st.write("##### Analisis Kapasitas Terpasang (Sumbangan Beton + Sengkang)")
         
         if d_seng == 0 or s_seng == 0 or kaki == 0:
             Vs_pakai = 0.0
@@ -159,14 +286,12 @@ if st.button("🚀 HITUNG & CEK KEAMANAN STRUKTUR", type="primary", use_containe
         phi_Vn = phi_geser * (Vc + Vs_pakai)
         
         colE, colF = st.columns(2)
-        colE.metric(label="Total Kapasitas Geser (φVn)", value=f"{phi_Vn:.2f} kN", delta="Kapasitas Tersedia", delta_color="normal")
-        colF.metric(label="Gaya Geser Rencana (Vu)", value=f"{Vu:.2f} kN", delta="Beban Terfaktor", delta_color="inverse")
+        colE.metric("Kapasitas Total (φVn)", f"{phi_Vn:.2f} kN")
+        colF.metric("Beban Geser (Vu)", f"{Vu:.2f} kN")
         
-        ratio_geser = min(Vu / phi_Vn, 1.0) if phi_Vn > 0 else 1.0
-        st.caption(f"**Rasio Penggunaan Kapasitas:** {ratio_geser*100:.1f}%")
-        st.progress(ratio_geser)
-
         if phi_Vn >= Vu:
-            st.success(f"✅ **STATUS AMAN!** Kapasitas geser total (φVn = {phi_Vn:.2f} kN) sanggup menahan beban rencana (Vu = {Vu:.2f} kN).")
+            st.success(f"✅ MISSION PASSED! (φVn ≥ Vu)")
         else:
-            st.error(f"❌ **TIDAK AMAN!** Kapasitas geser kurang. Rapatkan jarak sengkang (s) atau perbesar diameternya (Ø).")
+            st.error(f"❌ GAME OVER! Kapasitas kurang.")
+            
+        st.plotly_chart(create_retro_chart(phi_Vn, Vu, "GRAFIK KAPASITAS GESER"), use_container_width=True)
