@@ -49,7 +49,7 @@ Buka model struktur Anda yang sudah di- *Run Analysis*, lalu ikuti langkah ini:
 Jika ingin menjalankan kode ini di komputer lokal melalui VS Code:
 
 1. Clone atau unduh repositori ini.
-2. Pastikan Python sudah terinstal di komputer Anda.
+2. Pastikan Python, Streamlit, Pandas & Math sudah terinstal di komputer Anda.
 3. Instal *library* yang dibutuhkan melalui terminal:
    ```bash
    pip install -r requirements.txt
